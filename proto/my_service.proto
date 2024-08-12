@@ -4,17 +4,32 @@
 
 import "google/api/annotations.proto";
 
- message StringMessage {
+message StringMessage {
    
-   string value = 1;
+  string value = 1;
 
- }
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+
+  string code = 1;
+  string message = 2;
+  
+}
 
 service MyService {
    
     rpc Echo(StringMessage) returns (StringMessage) {
         option (google.api.http) = {
           get: "/",
+        };
+    }
+
+    rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {
+        option (google.api.http) = {
+          get: "/healthcheck",
         };
     }
  
