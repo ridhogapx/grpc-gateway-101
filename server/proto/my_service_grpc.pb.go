@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	MyService_Echo_FullMethodName = "/grpc_gateway_101.v1.MyService/Echo"
+	MyService_Echo_FullMethodName        = "/grpc_gateway_101.v1.MyService/Echo"
+	MyService_HealthCheck_FullMethodName = "/grpc_gateway_101.v1.MyService/HealthCheck"
 )
 
 // MyServiceClient is the client API for MyService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MyServiceClient interface {
 	Echo(ctx context.Context, in *StringMessage, opts ...grpc.CallOption) (*StringMessage, error)
+	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type myServiceClient struct {
@@ -46,11 +48,21 @@ func (c *myServiceClient) Echo(ctx context.Context, in *StringMessage, opts ...g
 	return out, nil
 }
 
+func (c *myServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	out := new(HealthCheckResponse)
+	err := c.cc.Invoke(ctx, MyService_HealthCheck_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MyServiceServer is the server API for MyService service.
 // All implementations must embed UnimplementedMyServiceServer
 // for forward compatibility
 type MyServiceServer interface {
 	Echo(context.Context, *StringMessage) (*StringMessage, error)
+	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedMyServiceServer()
 }
 
@@ -60,6 +72,9 @@ type UnimplementedMyServiceServer struct {
 
 func (UnimplementedMyServiceServer) Echo(context.Context, *StringMessage) (*StringMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Echo not implemented")
+}
+func (UnimplementedMyServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedMyServiceServer) mustEmbedUnimplementedMyServiceServer() {}
 
@@ -92,6 +107,24 @@ func _MyService_Echo_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MyService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MyServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MyService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MyServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MyService_ServiceDesc is the grpc.ServiceDesc for MyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +135,10 @@ var MyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Echo",
 			Handler:    _MyService_Echo_Handler,
+		},
+		{
+			MethodName: "HealthCheck",
+			Handler:    _MyService_HealthCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
