@@ -7,6 +7,8 @@ import (
 
 	pb "grpc-gateway-101/server/proto"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+
 	"google.golang.org/grpc"
 )
 
@@ -22,14 +24,20 @@ func main() {
 
 	srv := api.New()
 
-	grpcServer := grpc.NewServer()
-	pb.RegisterMyServiceServer(
-		grpcServer, srv,
+	grpcMuxServer := grpc.NewServer(
+		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
+		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
 	)
+
+	pb.RegisterMyServiceServer(
+		grpcMuxServer, srv,
+	)
+
+	grpc_prometheus.Register(grpcMuxServer)
 
 	fmt.Println("[main][func: RunGRPC] gRPC Server is running on port 9000")
 
-	err = grpcServer.Serve(listener)
+	err = grpcMuxServer.Serve(listener)
 	if err != nil {
 		fmt.Println("[main][func: RunGRPC] Couldn't serve grpc listener")
 		return
